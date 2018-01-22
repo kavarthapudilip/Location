@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Locate a phone</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.43.0/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.43.0/mapbox-gl.css' rel='stylesheet' />
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+</head>
+<body>
+<div id='map'></div>
+
+<script>
+
+
+// Access to MapBox and create new map
+
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGlsaXBrIiwiYSI6ImNqY3BjYXUyaDJrOWkzMHBmOXBtcDdoMTIifQ.uyCGK1GTxd6grnCKjAskDQ';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v9'
+});
+
+
+// When page loads, initialize socket and create a marker
+
+$(document).ready(function(){
+    console.log( "ready!" );
+
+    var socket = io.connect('http://127.0.0.1:5000/');
+    var y = -79.03221142292;
+    var x = 38.913371603579;
+
+    var marker = new mapboxgl.Marker()
+    .setLngLat([x, y])
+    .addTo(map);
+
+    // Function to relocate when receive data from server
+
+    function relocate(x,y) {
+    marker.setLngLat({lng: y, lat: x});
+    }
+
+
+    // Various behaviours of socket responses
+
+    socket.on('connect', function() {
+                socket.emit('my_event', {data: 'I\'m connected!'});
+            });
+
+    socket.on('my_response', function(msg) {
+                
+                var xy = msg.data.split(',');
+                y = parseFloat(xy[1]);
+                x = parseFloat(xy[0]); 
+                if (!isNaN(y) && !isNaN(x)) {
+                relocate(x,y);
+                }
+                
+            });
+
+
+});
+
+
+</script>
+</body>
+</html>
